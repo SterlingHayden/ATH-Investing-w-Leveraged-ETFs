@@ -1,3 +1,6 @@
+import yfinance as yf
+import pandas as pd
+
 def process_leveraged_data(ticker, leverage_scalar=None):
     """
     Download historical data for a given ticker and simulate leveraged ETF data.
@@ -28,16 +31,19 @@ def process_leveraged_data(ticker, leverage_scalar=None):
 
     # Simulate leveraged returns (remove NaN for first row calculation)
     baseline_data['Leveraged Return'] = baseline_data['Daily Return'] * leverage_scalar
-    baseline_data['Leveraged Return'].iloc[0] = 0  # Ensure the first leveraged return is 0
+    baseline_data.loc[baseline_data.index[0], 'Leveraged Return'] = 0  # Ensure the first leveraged return is 0
 
     # Initialize the simulated leveraged price column
     baseline_data['Simulated Leveraged Price'] = baseline_data['Adj Close'].iloc[0]  # Starting price
     
-    # Calculate cumulative price using Leveraged Return
-    for i in range(1, len(baseline_data)):
-        baseline_data['Simulated Leveraged Price'].iloc[i] = (
-            baseline_data['Simulated Leveraged Price'].iloc[i-1] *
-            (1 + baseline_data['Leveraged Return'].iloc[i])
-        )
+    # Calculate cumulative price using Leveraged Return (vectorized operation)
+    baseline_data['Simulated Leveraged Price'] = (1 + baseline_data['Leveraged Return']).cumprod()
+    baseline_data['Simulated Leveraged Price'] *= baseline_data['Adj Close'].iloc[0]  # Normalize to starting price
+
+    # Reset index to convert Date from index to a column
+    baseline_data.reset_index(inplace=True)
+
+    # Drop the 'Ticker' row (if present in the DataFrame)
+    baseline_data = baseline_data[baseline_data['Date'] != ticker]
 
     return baseline_data
