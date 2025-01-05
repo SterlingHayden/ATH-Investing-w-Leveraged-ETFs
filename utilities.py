@@ -95,7 +95,7 @@ def find_ath_indices(data, column, window=0):
     """
     Find indices where the column reaches a new all-time high and optionally expand indices by window of days.
     
-    Args:
+    Parameters:
         data (pd.DataFrame): The DataFrame containing the data.
         column (str): The column name to evaluate for all-time highs.
         Similarly, as mentioned above, we can examine the spread across multiple windows. (int): Number of days to expand the indices by (± window). Default is 0.
@@ -104,7 +104,7 @@ def find_ath_indices(data, column, window=0):
         list: List of indices where a new all-time high is set, optionally expanded.
     """
     ath_indices = []
-    current_ath = -9999
+    current_ath = -9999 # Init the current_ath with a super low number
     
     # Find new all-time highs
     for idx, value in data[column].items():
@@ -114,8 +114,9 @@ def find_ath_indices(data, column, window=0):
     
     # Expand indices if window > 0
     if window > 0:
-        expanded_indices = set()
+        expanded_indices = set() # This code avoids duplicate indices 
         for idx in ath_indices:
+            # Add indices in the range [idx - window, idx + window] to the expanded set
             for offset in range(-window, window + 1):  # ±window range
                 new_idx = idx + offset
                 if 0 <= new_idx < len(data):  # Ensure within bounds
@@ -124,8 +125,19 @@ def find_ath_indices(data, column, window=0):
     
     return ath_indices
 
+
 #########################################################################################################################################################
 def calculate_ath_returns_all_periods(data, ath_indices):
+    """
+    Calculate returns for a portfolio after reaching all-time highs (ATH) over various holding periods.
+
+    Parameters:
+        data (pd.DataFrame): DataFrame containing portfolio price data and the corresponding Date.
+        ath_indices (list of int): List of indices of intrest in the portfolio.
+
+    Returns:
+        pd.DataFrame: DataFrame containing ATH indices, corresponding dates, and returns for specified holding periods.
+    """
     holding_periods = {
         'Return_3M': 91,  # 3 months
         'Return_6M': 182, # 6 months
@@ -137,8 +149,9 @@ def calculate_ath_returns_all_periods(data, ath_indices):
     results = []
     for idx in ath_indices:
         row = {'ATH_Index': idx, 'Date': data.loc[idx, 'Date']}
+        # Loop through each holding period and calculate returns
         for period_name, holding_period in holding_periods.items():
-            if idx + holding_period < len(data):
+            if idx + holding_period < len(data): # Check if holding period is inside data's last day
                 entry_price = data['TotalPortfolioPrice'].iloc[idx]
                 exit_price = data['TotalPortfolioPrice'].iloc[idx + holding_period]
                 return_pct = (exit_price - entry_price) / entry_price
@@ -147,12 +160,22 @@ def calculate_ath_returns_all_periods(data, ath_indices):
                 row[period_name] = None  # Handle cases where holding period exceeds data length
 
         results.append(row)
+
     return pd.DataFrame(results)
 
 
-
-
+#########################################################################################################################################################
 def calculate_non_ath_returns_all_periods(data, ath_indices):
+    """
+    Calculate returns for portfolio indices that are NOT all-time highs (ATH) over various holding periods.
+
+    Parameters:
+        data (pd.DataFrame): DataFrame containing portfolio price data and the corresponding Date.
+        ath_indices (list of int): List of indices of intrest in the portfolio.
+
+    Returns:
+        pd.DataFrame: DataFrame containing non-ATH indices, corresponding dates, and returns for specified holding periods.
+    """    
     holding_periods = {
         'Return_3M': 91,  # 3 months
         'Return_6M': 182, # 6 months
@@ -162,12 +185,12 @@ def calculate_non_ath_returns_all_periods(data, ath_indices):
     }
     
     results = []
-
     for idx in data.index:
         if idx not in ath_indices:  # Exclude ATH indices
             row = {'Index': idx, 'Date': data.loc[idx, 'Date']}
+            # Loop through each holding period and calculate returns
             for period_name, holding_period in holding_periods.items():
-                if idx + holding_period < len(data):  # Ensure holding period is valid
+                if idx + holding_period < len(data):  # Check if holding period is inside data's last day
                     entry_price = data['TotalPortfolioPrice'].iloc[idx]
                     exit_price = data['TotalPortfolioPrice'].iloc[idx + holding_period]
                     return_pct = (exit_price - entry_price) / entry_price
@@ -176,4 +199,5 @@ def calculate_non_ath_returns_all_periods(data, ath_indices):
                     row[period_name] = None  # Handle cases where holding period exceeds data length
             
             results.append(row)
+
     return pd.DataFrame(results)
