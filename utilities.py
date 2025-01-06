@@ -92,26 +92,40 @@ def process_leveraged_data(tickers, leverage_scalars, portfolio_weights):
 
 
 #########################################################################################################################################################
-def find_ath_indices(data, column, window=0):
+def find_ath_indices(data, column, high_type="ATH", window=0):
     """
     Find indices where the column reaches a new all-time high and optionally expand indices by window of days.
     
     Parameters:
         data (pd.DataFrame): The DataFrame containing the data.
-        column (str): The column name to evaluate for all-time highs.
-        Similarly, as mentioned above, we can examine the spread across multiple windows. (int): Number of days to expand the indices by (± window). Default is 0.
+        column (str): The column name to evaluate for highs.
+        high_type (str): The type of high to calculate: "ATH" (all-time high) or "52W" (52-week high).
+        window (int): Number of days to expand the indices by (± window). Default is 0.
     
     Returns:
         list: List of indices where a new all-time high is set, optionally expanded.
     """
+
+    if high_type not in ["ATH", "52W"]:
+        raise ValueError("Invalid high_type. Use 'ATH' for all-time high or '52W' for 52-week high.")
+
     ath_indices = []
-    current_ath = -9999 # Init the current_ath with a super low number
     
-    # Find new all-time highs
-    for idx, value in data[column].items():
-        if value > current_ath:
-            current_ath = value
-            ath_indices.append(idx)
+    if high_type == "ATH":
+        current_ath = -9999 # Init the current_ath with a super low number
+        # Find new all-time highs
+        for idx, value in data[column].items():
+            if value > current_ath:
+                current_ath = value
+                ath_indices.append(idx)
+    
+    elif high_type == "52W":
+        # Calculate 52-week highs (365-day rolling high)
+        for idx in data.index:
+            start_idx = max(0, idx - 365) # Ensure the start index is within bounds
+            if data[column].iloc[idx] >= data[column].iloc[start_idx:idx + 1].max():
+                ath_indices.append(idx)
+
     
     # Expand indices if window > 0
     if window > 0:
@@ -205,20 +219,20 @@ def calculate_non_ath_returns_all_periods(data, ath_indices):
 
 
 #########################################################################################################################################################
-def plot_returns(data, windows, price_column='TotalPortfolioPrice'):
+def plot_returns(data, windows, price_column='TotalPortfolioPrice', high_type="ATH"):
     combined_results = []
     for w in windows:
         ############### this is now only lookin at when our portfolio is at an ath. Maybe change this?   #############
-        ath_indices_leveraged = find_ath_indices(data, price_column, window=w)
+        ath_indices_leveraged = find_ath_indices(data, price_column, high_type, window=w)
 
         # ATH returns
         ath_returns_df = calculate_ath_returns_all_periods(data, ath_indices_leveraged)
         non_ath_returns_df = calculate_non_ath_returns_all_periods(data, ath_indices_leveraged)
 
         # Add group flag
-        ath_returns_df['Group'] = f'ATH (Window={w} days)'
+        ath_returns_df['Group'] = f'{"ATH" if high_type == "ATH" else "52-wk High"} (Window={w} days)'
         if w == 0:
-            non_ath_returns_df['Group'] = 'Non-ATH (Window=0 days)'
+            non_ath_returns_df['Group'] = f'Non-{"ATH" if high_type == "ATH" else "52-wk High"} (Window=0 days)'
             combined_results.append(non_ath_returns_df)  # Only include non-ATH data for Window=0
 
         # Combine results
