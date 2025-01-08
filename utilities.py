@@ -127,13 +127,13 @@ def process_leveraged_data(tickers, leverage_scalars, portfolio_weights=1):
 
 
 #########################################################################################################################################################
-def find_ath_indices(data, column, high_type="ATH", window=0):
+def find_ath_indices(data, price_column, high_type="ATH", window=0):
     """
     Find indices where the column reaches a new all-time high and optionally expand indices by window of days.
     
     Parameters:
         data (pd.DataFrame): The DataFrame containing the data.
-        column (str): The column name to evaluate for highs.
+        price_column (str): The column name containing prices to evaluate for highs.
         high_type (str): The type of high to calculate: "ATH" (all-time high) or "52W" (52-week high).
         window (int): Number of days to expand the indices by (± window). Default is 0.
     
@@ -149,7 +149,7 @@ def find_ath_indices(data, column, high_type="ATH", window=0):
     if high_type == "ATH":
         current_ath = -9999 # Init the current_ath with a super low number
         # Find new all-time highs
-        for idx, value in data[column].items():
+        for idx, value in data[price_column].items():
             if value > current_ath:
                 current_ath = value
                 ath_indices.append(idx)
@@ -158,7 +158,7 @@ def find_ath_indices(data, column, high_type="ATH", window=0):
         # Calculate 52-week highs (365-day rolling high)
         for idx in data.index:
             start_idx = max(0, idx - 365) # Ensure the start index is within bounds
-            if data[column].iloc[idx] >= data[column].iloc[start_idx:idx + 1].max():
+            if data[price_column].iloc[idx] >= data[price_column].iloc[start_idx:idx + 1].max():
                 ath_indices.append(idx)
 
     
@@ -177,13 +177,14 @@ def find_ath_indices(data, column, high_type="ATH", window=0):
 
 
 #########################################################################################################################################################
-def calculate_ath_returns_all_periods(data, ath_indices):
+def calculate_ath_returns_all_periods(data, ath_indices, price_column):
     """
     Calculate returns for a portfolio after reaching all-time highs (ATH) over various holding periods.
 
     Parameters:
         data (pd.DataFrame): DataFrame containing portfolio price data and the corresponding Date.
         ath_indices (list of int): List of indices of intrest in the portfolio.
+        price_column (str): The column name containing prices to calculate returns on.
 
     Returns:
         pd.DataFrame: DataFrame containing ATH indices, corresponding dates, and returns for specified holding periods.
@@ -202,8 +203,8 @@ def calculate_ath_returns_all_periods(data, ath_indices):
         # Loop through each holding period and calculate returns
         for period_name, holding_period in holding_periods.items():
             if idx + holding_period < len(data): # Check if holding period is inside data's last day
-                entry_price = data['TotalPortfolioPrice'].iloc[idx]
-                exit_price = data['TotalPortfolioPrice'].iloc[idx + holding_period]
+                entry_price = data[price_column].iloc[idx]
+                exit_price = data[price_column].iloc[idx + holding_period]
                 return_pct = (exit_price - entry_price) / entry_price
                 row[period_name] = return_pct
             else:
@@ -215,13 +216,14 @@ def calculate_ath_returns_all_periods(data, ath_indices):
 
 
 #########################################################################################################################################################
-def calculate_non_ath_returns_all_periods(data, ath_indices):
+def calculate_non_ath_returns_all_periods(data, ath_indices, price_column):
     """
     Calculate returns for portfolio indices that are NOT all-time highs (ATH) over various holding periods.
 
     Parameters:
         data (pd.DataFrame): DataFrame containing portfolio price data and the corresponding Date.
         ath_indices (list of int): List of indices of intrest in the portfolio.
+        price_column (str): The column name containing prices to calculate returns on.
 
     Returns:
         pd.DataFrame: DataFrame containing non-ATH indices, corresponding dates, and returns for specified holding periods.
@@ -241,8 +243,8 @@ def calculate_non_ath_returns_all_periods(data, ath_indices):
             # Loop through each holding period and calculate returns
             for period_name, holding_period in holding_periods.items():
                 if idx + holding_period < len(data):  # Check if holding period is inside data's last day
-                    entry_price = data['TotalPortfolioPrice'].iloc[idx]
-                    exit_price = data['TotalPortfolioPrice'].iloc[idx + holding_period]
+                    entry_price = data[price_column].iloc[idx]
+                    exit_price = data[price_column].iloc[idx + holding_period]
                     return_pct = (exit_price - entry_price) / entry_price
                     row[period_name] = return_pct
                 else:
@@ -255,19 +257,32 @@ def calculate_non_ath_returns_all_periods(data, ath_indices):
 
 #########################################################################################################################################################
 def plot_returns(data, windows, price_column='TotalPortfolioPrice', high_type="ATH"):
+    """
+    Visualize forward price returns across various time periods for All-Time High (ATH) or other high types.
+
+    Parameters:
+        data (pd.DataFrame): The input DataFrame containing portfolio price data and relevant columns.
+        windows (list of int): List of window sizes defining the range of days before and after an ATH event to include in the analysis.
+        price_column (str): The column name containing portfolio prices. Default is 'TotalPortfolioPrice'.
+        high_type (str): Type of high to analyze, either 'ATH' (All-Time High) or other high types like '52-wk High'. Default is 'ATH'.
+
+    Returns:
+        Boxplot showing forward price returns for different holding periods.
+    """
     combined_results = []
+    min_w = min(windows)  # Find the minimum window value
     for w in windows:
         ############### this is now only lookin at when our portfolio is at an ath. Maybe change this?   #############
         ath_indices_leveraged = find_ath_indices(data, price_column, high_type, window=w)
 
         # ATH returns
-        ath_returns_df = calculate_ath_returns_all_periods(data, ath_indices_leveraged)
-        non_ath_returns_df = calculate_non_ath_returns_all_periods(data, ath_indices_leveraged)
+        ath_returns_df = calculate_ath_returns_all_periods(data, ath_indices_leveraged, price_column)
+        non_ath_returns_df = calculate_non_ath_returns_all_periods(data, ath_indices_leveraged, price_column)
 
         # Add group flag
         ath_returns_df['Group'] = f'{"ATH" if high_type == "ATH" else "52-wk High"} (Window={w} days)'
-        if w == 0:
-            non_ath_returns_df['Group'] = f'Non-{"ATH" if high_type == "ATH" else "52-wk High"} (Window=0 days)'
+        if w == min_w:
+            non_ath_returns_df['Group'] = f'Non-{"ATH" if high_type == "ATH" else "52-wk High"} (Window={min_w} days)'
             combined_results.append(non_ath_returns_df)  # Only include non-ATH data for Window=0
 
         # Combine results
