@@ -3,19 +3,54 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 #########################################################################################################################################################
-def process_leveraged_data(tickers, leverage_scalars, portfolio_weights):
+def process_leveraged_data(tickers, leverage_scalars, portfolio_weights=1):
     """
     Download historical data for given tickers, simulate leveraged ETF data, 
-    and calculate their weighted contributions to the portfolio.
+    and calculate their weighted contributions to the portfolio based on the number of tickers provided.
 
     Parameters:
         tickers (list of str): List of ticker symbols (e.g., ["QQQ", "SPY"]).
         leverage_scalars (list of float): List of scalars for leveraged equity returns (e.g., [3, 1]).
-        portfolio_weights (list of float): List of portfolio weights for each ticker; must sum to 1 (e.g., [.2, .8]).
+        portfolio_weights (list of float): List of portfolio weights for each ticker; must sum to 1 (e.g., [.2, .8]). Default is 1 as it assumes a single-ticker case.
 
     Returns:
         pd.DataFrame: DataFrame with formatted columns for each ticker and weighted portfolio returns.
     """
+    ####################### Handle the single-ticker case #######################
+    if not isinstance(tickers, list):
+        ticker = tickers  # Assign single ticker directly
+
+        print(f"Downloading data for {ticker}...")
+        baseline_data = yf.download(ticker, progress=False)
+
+        # Ensure leverage_scalar is valid
+        if not isinstance(leverage_scalars, (int, float)):
+            raise ValueError("For a single ticker, leverage_scalars must be a single numerical value.")
+
+        # Calculate daily returns (pct_change introduces NaN in the first row)
+        baseline_data['Daily Return'] = baseline_data['Adj Close'].pct_change()
+
+        # Simulate leveraged returns (remove NaN for first row calculation)
+        baseline_data['Leveraged Return'] = baseline_data['Daily Return'] * leverage_scalars
+        baseline_data.loc[baseline_data.index[0], 'Leveraged Return'] = 0  # Ensure the first leveraged return is 0
+
+        # Initialize the simulated leveraged price column
+        baseline_data['Simulated Leveraged Price'] = baseline_data['Adj Close'].iloc[0]  # Starting price
+        
+        # Calculate cumulative price using Leveraged Return (vectorized operation)
+        baseline_data['Simulated Leveraged Price'] = (1 + baseline_data['Leveraged Return']).cumprod()
+        baseline_data['Simulated Leveraged Price'] *= baseline_data['Adj Close'].iloc[0]  # Normalize to starting price
+
+        # Reset index to convert Date from index to a column
+        baseline_data.reset_index(inplace=True)
+
+        # Drop the 'Ticker' row (if present in the DataFrame)
+        baseline_data = baseline_data[baseline_data['Date'] != ticker]
+
+        return baseline_data
+
+
+    ####################### Handle the multi-ticker case #######################
     if len(tickers) != len(leverage_scalars) or len(tickers) != len(portfolio_weights): # Check if there is a leverage_scalars & portfolio_weight for each ticker
         raise ValueError("The number of tickers, leverage scalars, and portfolio weights must match.")
     
@@ -48,10 +83,10 @@ def process_leveraged_data(tickers, leverage_scalars, portfolio_weights):
         # Simulate leveraged returns based on the scalar
         baseline_data['Leveraged Return'] = baseline_data['Daily Return'] * scalar
         baseline_data.loc[baseline_data.index[0], 'Leveraged Return'] = 0  # Ensure the first leveraged return is 0
-
+        
         # Weighted leveraged return
         baseline_data['Weighted Leveraged Return'] = baseline_data['Leveraged Return'] * weight
-
+        
         # Calculate simulated leveraged price
         baseline_data['Simulated Leveraged Price'] = (1 + baseline_data['Weighted Leveraged Return']).cumprod()
         baseline_data['Simulated Leveraged Price'] *= baseline_data['Adj Close'].iloc[0]  # Normalize to starting price
@@ -272,4 +307,4 @@ def plot_returns(data, windows, price_column='TotalPortfolioPrice', high_type="A
     plt.tight_layout()
 
     # Show the plot
-    return plt.show()
+    return plt.show()  
