@@ -7,6 +7,13 @@
 More details can be found [here](https://www.jpmorgan.com/insights/markets/top-market-takeaways/3-considerations-for-investing-in-a-bull-market#:~:text=Over%2024%20months%2C%20an%20individual,return%20an%20average%20of%2018.5%25).
   
 
-# How Does Investing in Leveraged ETFs at All-Time Highs Compare?
+# How Does Investing in Leveraged ETFs at or near All-Time Highs or 52 Week Highs Compare?
+This repository aims to provide a reproducible answer to that question. By simulating historical leveraged data and backtesting return rates, it seeks to analyze the risks and rewards of investing in leveraged portfolios during market highs in a reproducible manner.  
+
+| File                             | What it does                                                                                                                |
+|----------------------------------|-----------------------------------------------------------------------------------------------------------------------------|
+| `Demo-Single-Stock.ipynb`        | blah                                                                           |
+| `Demo-Portfolio.ipynb`           | blah |
+| `utilities.ipynb`                | blah |
 
 
