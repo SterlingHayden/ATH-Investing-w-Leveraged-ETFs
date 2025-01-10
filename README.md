@@ -12,8 +12,24 @@ This repository aims to provide a reproducible answer to that question. By simul
 
 | File                             | What it does                                                                                                                |
 |----------------------------------|-----------------------------------------------------------------------------------------------------------------------------|
-| `Demo-Single-Stock.ipynb`        | blah                                                                           |
-| `Demo-Portfolio.ipynb`           | blah |
-| `utilities.ipynb`                | blah |
+| `Demo-Single-Stock.ipynb`        | Simulates and backtests the return rates of a **single stock** selected by the user.                                        |
+| `Demo-Portfolio.ipynb`           | Simulates and backtests the return rates of a **porfolio of stocks** selected by the user.                                  |
+| `utilities.ipynb`                | Provides callable functions for data preprocessing, return calculations, and plotting.                                      |
+  
+## **Leveraged Single Stock Returns**
+### 3X Leveraging $SPY ($UPRO)
+| When Buying On or Near an All-Time High                 | When Buying On or Near a 52-Week High                 |
+|---------------------------------------------------------|-----------------------------------------------------------|
+| ![Plot ATH](example-images/3X-SPY-ATH.png) | ![Plot 52W](example-images/3X-SPY-52W.png) |
+### When Buying On or Near a 52-Week High
+
+
+## **Leveraged Portfolio of Stock Returns**
+### When Buying On or Near an All-Time High
+### When Buying On or Near a 52-Week High
+
+
+
+# Key Findings
 
 
