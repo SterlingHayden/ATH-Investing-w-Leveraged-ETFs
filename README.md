@@ -14,7 +14,7 @@ This repository aims to provide a reproducible answer to that question. By simul
 |----------------------------------|-----------------------------------------------------------------------------------------------------------------------------|
 | `Demo-Single-Stock.ipynb`        | Simulates and backtests the return rates of a **single stock** selected by the user.                                        |
 | `Demo-Portfolio.ipynb`           | Simulates and backtests the return rates of a **porfolio of stocks** selected by the user.                                  |
-| `utilities.ipynb`                | Provides callable functions for data preprocessing, return calculations, and plotting.                                      |
+| `utilities.py`                | Provides callable functions for data preprocessing, return calculations, and plotting.                                      |
 
 $~$
   
