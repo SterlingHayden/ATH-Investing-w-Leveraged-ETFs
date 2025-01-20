@@ -103,8 +103,10 @@ def process_leveraged_data(tickers, leverage_scalars, portfolio_weights=1):
         )
 
         # Keep only relevant columns and reset index
-        baseline_data = baseline_data[[f'DailyReturn_{ticker}', f'AdjClose_{ticker}', 
-                                       f'LeveragedReturn_{ticker}_{scalar}X', f'SimulatedLeveragedPrice_{ticker}_{scalar}X', 
+        baseline_data = baseline_data[[f'DailyReturn_{ticker}', 
+                                       f'AdjClose_{ticker}', 
+                                       f'LeveragedReturn_{ticker}_{scalar}X', 
+                                       f'SimulatedLeveragedPrice_{ticker}_{scalar}X', 
                                        f'WeightedLeveragedReturn_{ticker}_{scalar}X']]
         
         baseline_data.reset_index(inplace=True)
@@ -114,6 +116,10 @@ def process_leveraged_data(tickers, leverage_scalars, portfolio_weights=1):
             result_df = baseline_data
         else:
             result_df = pd.merge(result_df, baseline_data, on='Date', how='outer')
+
+    # Calculate total portfolio adjusted close price (weighted by portfolio weights)
+    adjusted_close_columns = [col for col in result_df.columns if col.startswith('AdjClose')]
+    result_df['UnleveragedPortfolioPrice'] = sum(result_df[col] * weight for col, weight in zip(adjusted_close_columns, portfolio_weights))
 
     # Calculate total portfolio returns
     weighted_columns_1 = [col for col in result_df.columns if col.startswith('LeveragedReturn')]
@@ -244,7 +250,7 @@ def calculate_non_ath_returns_all_periods(data, ath_indices, price_column, holdi
 
 
 #########################################################################################################################################################
-def plot_returns(data, windows, price_column='TotalPortfolioPrice', high_type="ATH", holding_periods={'Return_3M': 91,'Return_6M': 182,'Return_12M': 365,'Return_24M': 730,'Return_48M': 1460,}):
+def plot_returns(data, windows, price_column='TotalPortfolioPrice', high_type="ATH", plot_relative=False, holding_periods={'Return_3M': 91,'Return_6M': 182,'Return_12M': 365,'Return_24M': 730,'Return_48M': 1460,}):
     """
     Visualize forward price returns across various time periods for All-Time High (ATH) or other high types.
 
@@ -253,6 +259,7 @@ def plot_returns(data, windows, price_column='TotalPortfolioPrice', high_type="A
         windows (list of int): List of window sizes defining the range of days before and after an ATH event to include in the analysis.
         price_column (str): The column name containing portfolio prices. Default is 'TotalPortfolioPrice'.
         high_type (str): Type of high to analyze, either 'ATH' (All-Time High) or other high types like '52-wk High'. Default is 'ATH'.
+        plot_relative (bool): If True, plot side-by-side charts for leveraged and unleveraged performance.
         holding_periods (dict): A dictionary where keys are holding period labels (e.g., 'Return_3M') and values are the number of days in the holding period (e.g., 91 for 3 months).
 
     Returns:
@@ -288,27 +295,104 @@ def plot_returns(data, windows, price_column='TotalPortfolioPrice', high_type="A
         value_name='Return'
     )
 
-    # Create boxplots
-    plt.figure(figsize=(14, 8))
-    sns.boxplot(
-        data=melted_df, 
-        x='Holding Period', 
-        y='Return', 
-        hue='Group', 
-        palette='tab10'
-    )
+    # # Create boxplots
+    # plt.figure(figsize=(14, 8))
+    # sns.boxplot(
+    #     data=melted_df, 
+    #     x='Holding Period', 
+    #     y='Return', 
+    #     hue='Group', 
+    #     palette='tab10'
+    # )
+
+    # from matplotlib.ticker import PercentFormatter, MaxNLocator
+    # # Customize plot aesthetics
+    # plt.title('Forward Price Returns Across Time Periods')
+    # plt.xlabel('Holding Period')
+    # plt.ylabel('Return (%)')
+    # plt.gca().yaxis.set_major_formatter(PercentFormatter(1))  # y-axis as percentages
+    # plt.gca().yaxis.set_major_locator(MaxNLocator(nbins=10))  # Add more ticks on the y-axis
+    # plt.grid(True, which='major', linestyle='--', linewidth=0.7, alpha=0.7)  # Add a grid
+    # plt.axhline(0, color='red', linestyle='--', linewidth=2)  # Add a baseline for 0% return
+    # plt.legend(title='Investment Type', bbox_to_anchor=(1.05, 1), loc='upper left')
+    # plt.tight_layout()
+
+    # # Show the plot
+    # return plt.show()  
+
+
+
 
     from matplotlib.ticker import PercentFormatter, MaxNLocator
-    # Customize plot aesthetics
-    plt.title('Forward Price Returns Across Time Periods')
-    plt.xlabel('Holding Period')
-    plt.ylabel('Return (%)')
-    plt.gca().yaxis.set_major_formatter(PercentFormatter(1))  # y-axis as percentages
-    plt.gca().yaxis.set_major_locator(MaxNLocator(nbins=10))  # Add more ticks on the y-axis
-    plt.grid(True, which='major', linestyle='--', linewidth=0.7, alpha=0.7)  # Add a grid
-    plt.axhline(0, color='red', linestyle='--', linewidth=2)  # Add a baseline for 0% return
-    plt.legend(title='Investment Type', bbox_to_anchor=(1.05, 1), loc='upper left')
-    plt.tight_layout()
 
-    # Show the plot
-    return plt.show()  
+    if plot_relative == False:
+        # Single boxplot
+        plt.figure(figsize=(14, 8))
+        sns.boxplot(
+            data=melted_df, 
+            x='Holding Period', 
+            y='Return', 
+            hue='Group', 
+            palette='tab10'
+        )
+        
+        # Customize plot aesthetics
+        plt.title('Forward Price Returns Across Time Periods')
+        plt.xlabel('Holding Period')
+        plt.ylabel('Return (%)')
+        plt.gca().yaxis.set_major_formatter(PercentFormatter(1))  # y-axis as percentages
+        plt.gca().yaxis.set_major_locator(MaxNLocator(nbins=10))  # Add more ticks on the y-axis
+        plt.grid(True, which='major', linestyle='--', linewidth=0.7, alpha=0.7)  # Add a grid
+        plt.axhline(0, color='red', linestyle='--', linewidth=2)  # Add a baseline for 0% return
+        plt.legend(title='Investment Type', bbox_to_anchor=(1.05, 1), loc='upper left')
+        plt.tight_layout()
+
+        # Show the plot
+        plt.show()
+
+    else:
+        # Create a subplot with two side-by-side boxplots
+        fig, axes = plt.subplots(1, 2, figsize=(20, 8))
+
+        # Left Boxplot: Relative (Leveraged)
+        sns.boxplot(
+            data=melted_df, 
+            x='Holding Period', 
+            y='Return', 
+            hue='Group', 
+            palette='tab10', 
+            ax=axes[0]
+        )
+        axes[0].set_title('Forward Price Returns Across Time Periods (Leveraged)')
+        axes[0].set_xlabel('Holding Period')
+        axes[0].set_ylabel('Return (%)')
+        axes[0].yaxis.set_major_formatter(PercentFormatter(1))  # y-axis as percentages
+        axes[0].yaxis.set_major_locator(MaxNLocator(nbins=10))  # Add more ticks on the y-axis
+        axes[0].grid(True, which='major', linestyle='--', linewidth=0.7, alpha=0.7)  # Add a grid
+        axes[0].axhline(0, color='red', linestyle='--', linewidth=2)  # Add a baseline for 0% return
+        axes[0].legend(title='Investment Type', loc='upper left')
+
+        # Right Boxplot: Unleveraged (if applicable, use another dataset or filter)
+        sns.boxplot(
+            data=second_melted_df,  ########## Use the second dataset for unleveraged, create with the adj close or UnleveragedPortfolioPrice col 
+            x='Holding Period', 
+            y='Return', 
+            hue='Group', 
+            palette='tab10', 
+            ax=axes[1]
+        )
+        axes[1].set_title('Forward Price Returns Across Time Periods (Unleveraged)')
+        axes[1].set_xlabel('Holding Period')
+        axes[1].set_ylabel('Return (%)')
+        axes[1].yaxis.set_major_formatter(PercentFormatter(1))  # y-axis as percentages
+        axes[1].yaxis.set_major_locator(MaxNLocator(nbins=10))  # Add more ticks on the y-axis
+        axes[1].grid(True, which='major', linestyle='--', linewidth=0.7, alpha=0.7)  # Add a grid
+        axes[1].axhline(0, color='red', linestyle='--', linewidth=2)  # Add a baseline for 0% return
+        axes[1].legend(title='Investment Type', loc='upper left')
+
+        # Adjust layout for better spacing
+        plt.tight_layout()
+
+        # Show the plots
+        plt.show()
+
