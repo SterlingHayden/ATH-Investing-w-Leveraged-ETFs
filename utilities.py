@@ -177,7 +177,7 @@ def find_ath_indices(data, price_column, high_type="ATH", window=0):
 
 
 #########################################################################################################################################################
-def calculate_ath_returns_all_periods(data, ath_indices, price_column):
+def calculate_ath_returns_all_periods(data, ath_indices, price_column, holding_periods):
     """
     Calculate returns for a portfolio after reaching all-time highs (ATH) over various holding periods.
 
@@ -185,17 +185,11 @@ def calculate_ath_returns_all_periods(data, ath_indices, price_column):
         data (pd.DataFrame): DataFrame containing portfolio price data and the corresponding Date.
         ath_indices (list of int): List of indices of intrest in the portfolio.
         price_column (str): The column name containing prices to calculate returns on.
+        holding_periods (dict): A dictionary where keys are holding period labels (e.g., 'Return_3M') and values are the number of days in the holding period (e.g., 91 for 3 months).
 
     Returns:
         pd.DataFrame: DataFrame containing ATH indices, corresponding dates, and returns for specified holding periods.
     """
-    holding_periods = {
-        'Return_3M': 91,  # 3 months
-        'Return_6M': 182, # 6 months
-        'Return_12M': 365, # 12 months
-        'Return_24M': 730, # 2 Years
-        'Return_48M': 1460, # 4 Years
-    }
     
     results = []
     for idx in ath_indices:
@@ -216,7 +210,7 @@ def calculate_ath_returns_all_periods(data, ath_indices, price_column):
 
 
 #########################################################################################################################################################
-def calculate_non_ath_returns_all_periods(data, ath_indices, price_column):
+def calculate_non_ath_returns_all_periods(data, ath_indices, price_column, holding_periods):
     """
     Calculate returns for portfolio indices that are NOT all-time highs (ATH) over various holding periods.
 
@@ -224,17 +218,11 @@ def calculate_non_ath_returns_all_periods(data, ath_indices, price_column):
         data (pd.DataFrame): DataFrame containing portfolio price data and the corresponding Date.
         ath_indices (list of int): List of indices of intrest in the portfolio.
         price_column (str): The column name containing prices to calculate returns on.
+        holding_periods (dict): A dictionary where keys are holding period labels (e.g., 'Return_3M') and values are the number of days in the holding period (e.g., 91 for 3 months).
 
     Returns:
         pd.DataFrame: DataFrame containing non-ATH indices, corresponding dates, and returns for specified holding periods.
     """    
-    holding_periods = {
-        'Return_3M': 91,  # 3 months
-        'Return_6M': 182, # 6 months
-        'Return_12M': 365, # 12 months
-        'Return_24M': 730, # 2 Years
-        'Return_48M': 1460, # 4 Years
-    }
     
     results = []
     for idx in data.index:
@@ -256,7 +244,7 @@ def calculate_non_ath_returns_all_periods(data, ath_indices, price_column):
 
 
 #########################################################################################################################################################
-def plot_returns(data, windows, price_column='TotalPortfolioPrice', high_type="ATH"):
+def plot_returns(data, windows, price_column='TotalPortfolioPrice', high_type="ATH", holding_periods={'Return_3M': 91,'Return_6M': 182,'Return_12M': 365,'Return_24M': 730,'Return_48M': 1460,}):
     """
     Visualize forward price returns across various time periods for All-Time High (ATH) or other high types.
 
@@ -265,6 +253,7 @@ def plot_returns(data, windows, price_column='TotalPortfolioPrice', high_type="A
         windows (list of int): List of window sizes defining the range of days before and after an ATH event to include in the analysis.
         price_column (str): The column name containing portfolio prices. Default is 'TotalPortfolioPrice'.
         high_type (str): Type of high to analyze, either 'ATH' (All-Time High) or other high types like '52-wk High'. Default is 'ATH'.
+        holding_periods (dict): A dictionary where keys are holding period labels (e.g., 'Return_3M') and values are the number of days in the holding period (e.g., 91 for 3 months).
 
     Returns:
         Boxplot showing forward price returns for different holding periods.
@@ -276,8 +265,8 @@ def plot_returns(data, windows, price_column='TotalPortfolioPrice', high_type="A
         ath_indices_leveraged = find_ath_indices(data, price_column, high_type, window=w)
 
         # ATH returns
-        ath_returns_df = calculate_ath_returns_all_periods(data, ath_indices_leveraged, price_column)
-        non_ath_returns_df = calculate_non_ath_returns_all_periods(data, ath_indices_leveraged, price_column)
+        ath_returns_df = calculate_ath_returns_all_periods(data, ath_indices_leveraged, price_column, holding_periods)
+        non_ath_returns_df = calculate_non_ath_returns_all_periods(data, ath_indices_leveraged, price_column, holding_periods)
 
         # Add group flag
         ath_returns_df['Group'] = f'{"ATH" if high_type == "ATH" else "52-wk High"} (Window={w} days)'
@@ -294,7 +283,7 @@ def plot_returns(data, windows, price_column='TotalPortfolioPrice', high_type="A
     # Melt DataFrame for the two groups & their holding periods
     melted_df = final_combined_df.melt(
         id_vars=['Group'], 
-        value_vars=['Return_3M', 'Return_6M', 'Return_12M', 'Return_24M', 'Return_48M'], 
+        value_vars=list(holding_periods.keys()), 
         var_name='Holding Period', 
         value_name='Return'
     )
