@@ -259,16 +259,17 @@ def plot_returns(data, windows, price_column='TotalPortfolioPrice', high_type="A
         windows (list of int): List of window sizes defining the range of days before and after an ATH event to include in the analysis.
         price_column (str): The column name containing portfolio prices. Default is 'TotalPortfolioPrice'.
         high_type (str): Type of high to analyze, either 'ATH' (All-Time High) or other high types like '52-wk High'. Default is 'ATH'.
-        plot_relative (bool): If True, plot side-by-side charts for leveraged and unleveraged performance.
+        plot_relative (bool): If True, plot side-by-side charts for leveraged and unleveraged performance using the same strategy (buying at unleveraged high points). 
         holding_periods (dict): A dictionary where keys are holding period labels (e.g., 'Return_3M') and values are the number of days in the holding period (e.g., 91 for 3 months).
 
     Returns:
         Boxplot showing forward price returns for different holding periods.
     """
+    ####################### Create a df of the leveraged returns #######################
     combined_results = []
     min_w = min(windows)  # Find the minimum window value
     for w in windows:
-        ############### this is now only lookin at when our portfolio is at an ath. Maybe change this?   #############
+        # Calling find_ath_indices w/ user defined params 
         ath_indices_leveraged = find_ath_indices(data, price_column, high_type, window=w)
 
         # ATH returns
@@ -295,37 +296,12 @@ def plot_returns(data, windows, price_column='TotalPortfolioPrice', high_type="A
         value_name='Return'
     )
 
-    # # Create boxplots
-    # plt.figure(figsize=(14, 8))
-    # sns.boxplot(
-    #     data=melted_df, 
-    #     x='Holding Period', 
-    #     y='Return', 
-    #     hue='Group', 
-    #     palette='tab10'
-    # )
-
-    # from matplotlib.ticker import PercentFormatter, MaxNLocator
-    # # Customize plot aesthetics
-    # plt.title('Forward Price Returns Across Time Periods')
-    # plt.xlabel('Holding Period')
-    # plt.ylabel('Return (%)')
-    # plt.gca().yaxis.set_major_formatter(PercentFormatter(1))  # y-axis as percentages
-    # plt.gca().yaxis.set_major_locator(MaxNLocator(nbins=10))  # Add more ticks on the y-axis
-    # plt.grid(True, which='major', linestyle='--', linewidth=0.7, alpha=0.7)  # Add a grid
-    # plt.axhline(0, color='red', linestyle='--', linewidth=2)  # Add a baseline for 0% return
-    # plt.legend(title='Investment Type', bbox_to_anchor=(1.05, 1), loc='upper left')
-    # plt.tight_layout()
-
-    # # Show the plot
-    # return plt.show()  
 
 
-
-
+    ####################### Dynamic Ploting of Returns #######################
     from matplotlib.ticker import PercentFormatter, MaxNLocator
 
-    if plot_relative == False:
+    if plot_relative == False: # Set to False by default
         # Single boxplot
         plt.figure(figsize=(14, 8))
         sns.boxplot(
@@ -350,11 +326,11 @@ def plot_returns(data, windows, price_column='TotalPortfolioPrice', high_type="A
         # Show the plot
         plt.show()
 
-    else:
-        # Create a subplot with two side-by-side boxplots
+    else: # If plot_relative == True
+        # Create a subplot w/ 2 boxplots
         fig, axes = plt.subplots(1, 2, figsize=(20, 8))
 
-        # Left Boxplot: Relative (Leveraged)
+        # Left Boxplot: Leveraged (We already calculated this above)
         sns.boxplot(
             data=melted_df, 
             x='Holding Period', 
@@ -372,9 +348,39 @@ def plot_returns(data, windows, price_column='TotalPortfolioPrice', high_type="A
         axes[0].axhline(0, color='red', linestyle='--', linewidth=2)  # Add a baseline for 0% return
         axes[0].legend(title='Investment Type', loc='upper left')
 
-        # Right Boxplot: Unleveraged (if applicable, use another dataset or filter)
+        # Right Boxplot: Unleveraged
+        # We have to calculate the new df of the unleveraged returns
+        combined_results_unlev = [] 
+        min_w = min(windows)  # Find the minimum window value
+        for w in windows:
+            price_column_unlev = "UnleveragedPortfolioPrice" if "UnleveragedPortfolioPrice" in data.columns else "Adj Close" # Dynamic grab of the column of intrest
+            ath_indices_unleveraged = find_ath_indices(data, price_column_unlev, high_type, window=w)
+
+            # ATH returns
+            ath_returns_df_unlev = calculate_ath_returns_all_periods(data, ath_indices_unleveraged, price_column, holding_periods)
+            non_ath_returns_df_unlev = calculate_non_ath_returns_all_periods(data, ath_indices_unleveraged, price_column, holding_periods)
+
+            # Add group flag
+            ath_returns_df_unlev['Group'] = f'{"ATH" if high_type == "ATH" else "52-wk High"} (Window={w} days)'
+            if w == min_w:
+                non_ath_returns_df_unlev['Group'] = f'Non-{"ATH" if high_type == "ATH" else "52-wk High"} (Window={min_w} days)'
+                combined_results_unlev.append(non_ath_returns_df_unlev)  # Only include non-ATH data for Window=0
+
+            # Combine results
+            combined_results_unlev.append(ath_returns_df_unlev)
+
+        # # Join to a single df
+        final_combined_df_unlev = pd.concat(combined_results_unlev)
+
+        # Melt DataFrame for the two groups & their holding periods
+        second_melted_df = final_combined_df_unlev.melt(
+            id_vars=['Group'], 
+            value_vars=list(holding_periods.keys()), 
+            var_name='Holding Period', 
+            value_name='Return'
+        )
         sns.boxplot(
-            data=second_melted_df,  ########## Use the second dataset for unleveraged, create with the adj close or UnleveragedPortfolioPrice col 
+            data=second_melted_df,  
             x='Holding Period', 
             y='Return', 
             hue='Group', 
