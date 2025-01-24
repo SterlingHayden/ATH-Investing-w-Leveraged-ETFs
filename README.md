@@ -29,11 +29,19 @@ $~$
 |---------------------------------------------------------|-----------------------------------------------------------|
 | ![Plot ATH](example-images/2X-SPY-ATH.png) | ![Plot 52W](example-images/2X-SPY-52W.png) |
 
+### We can visualize the All-Time High returns with side-by-side charts comparing 3X leveraged and unleveraged performance, using the same high-point buy strategy but with different purchase timings for leveraged and unleveraged cases.
+![Plot ATH PR](example-images/3X-SPY-ATH-PR.png)
+
+
 ### If we’re concerned that the simulated timeframe isn’t representative, we could use [Shiller Data](http://www.econ.yale.edu/~shiller/data.htm), which includes historical returns for large-cap U.S. stocks such as the S&P 500, dating back to the 1800s. This would help us better understand how leveraging the S&P 500 performs across various market conditions. The following plots are 3X leveraged.
 | When Buying On or Near an All-Time High                 | When Buying On or Near a 52-Week High                 |
 |---------------------------------------------------------|-----------------------------------------------------------|
 | ![Plot ATH](example-images/3X-Shiller-ATH.png) | ![Plot 52W](example-images/3X-Shiller-52W.png) |
-  
+
+
+### When backtesting with Shiller data, we find that investing at or near all-time highs performs poorly, whereas buying at 52-week highs shows stronger outcomes. Let’s now examine how leveraged and unleveraged performance compares over our holding periods of interest (e.g., 1–2 years).
+![Plot 52W PR](example-images/3X-Shiller-52W-PR.png)
+
 $~$
 
 ## **Leveraged Portfolio of Stock Returns**
@@ -42,6 +50,9 @@ $~$
 |---------------------------------------------------------|-----------------------------------------------------------|
 | ![Plot ATH](example-images/Portfolio-ATH.png) | ![Plot 52W](example-images/Portfolio-52W.png) |
 
+### The return spread appears similar in the [side-by-side charts comparing leveraged and unleveraged performance](example-images/Portfolio-ATH-PR.png), with the unleveraged portfolio outperforming on average until the 4-year mark, after which the leveraged portfolio takes the lead.
+![Plot ATH PR 1y-2y](example-images/Portfolio-ATH-PR-1y-2y.png)
+![Plot ATH PR 4y](example-images/Portfolio-ATH-PR-4y.png)
 
 # Key Findings
 ⭐ Backtesting with leveraged Shiller data from the 1800s shows that investing at all-time or 52-week highs underperforms the baseline index. However, after about 4 years, the value gap between the baseline and leveraged investments closes.
