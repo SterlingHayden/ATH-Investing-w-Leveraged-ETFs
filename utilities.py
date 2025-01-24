@@ -133,6 +133,37 @@ def process_leveraged_data(tickers, leverage_scalars, portfolio_weights=1):
 
 
 #########################################################################################################################################################
+def leverage_dataframe(data, scalar):
+    """
+    Used when applying leverge to preexisting data. 
+    Applies a specified leverage scalar to the Adj Close column in the given DataFrame and calculates the leveraged price.
+
+    Parameters:
+    data (pd.DataFrame): A DataFrame with 'Adj Close' column.
+    scalar (float): The leverage scalar to apply.
+
+    Returns:
+    pd.DataFrame: A new DataFrame with the original data and added 'Leveraged Return' & 'Leveraged Price' columns.
+    """
+    # Handle missing values in 'Adj Close' before pct_change
+    if data['Adj Close'].isnull().any():
+        data['Adj Close'] = data['Adj Close'].ffill()  # Forward fill NaNs
+    
+    # Calculate daily percentage change in Adj Close
+    data['Daily Return'] = data['Adj Close'].pct_change()  # No need for fill_method here
+    
+    # Calculate leveraged return based on the scalar
+    data['Leveraged Return'] = data['Daily Return'] * scalar
+    data.loc[0, 'Leveraged Return'] = 0  # First row has no prior return
+    
+    # Calculate the Leveraged Price
+    data['Leveraged Price'] = (1 + data['Leveraged Return']).cumprod()
+    data['Leveraged Price'] *= data['Adj Close'].iloc[0]  # Normalize to starting price
+
+    return data
+
+
+#########################################################################################################################################################
 def find_ath_indices(data, price_column, high_type="ATH", window=0):
     """
     Find indices where the column reaches a new all-time high and optionally expand indices by window of days.
