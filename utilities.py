@@ -388,8 +388,8 @@ def plot_returns(data, windows, price_column='TotalPortfolioPrice', high_type="A
             ath_indices_unleveraged = find_ath_indices(data, price_column_unlev, high_type, window=w)
 
             # ATH returns
-            ath_returns_df_unlev = calculate_ath_returns_all_periods(data, ath_indices_unleveraged, price_column, holding_periods)
-            non_ath_returns_df_unlev = calculate_non_ath_returns_all_periods(data, ath_indices_unleveraged, price_column, holding_periods)
+            ath_returns_df_unlev = calculate_ath_returns_all_periods(data, ath_indices_unleveraged, price_column_unlev, holding_periods)
+            non_ath_returns_df_unlev = calculate_non_ath_returns_all_periods(data, ath_indices_unleveraged, price_column_unlev, holding_periods)
 
             # Add group flag
             ath_returns_df_unlev['Group'] = f'{"ATH" if high_type == "ATH" else "52-wk High"} (Window={w} days)'
