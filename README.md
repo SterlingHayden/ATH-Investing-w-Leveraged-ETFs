@@ -17,7 +17,16 @@ This repository aims to provide a reproducible answer to that question. By simul
 | `utilities.py`                | Provides callable functions for data preprocessing, return calculations, and plotting.                                      |
 
 $~$
-  
+
+# Key Findings
+⭐ Backtesting with leveraged Shiller data from the 1800s reveals that historically, investing at or near 52-week highs has been less risky and more stable compared to investing at or near all-time highs.
+
+⭐ Leveraging a portfolio of stocks reduces risk compared to leveraging a single stock.
+
+⭐ Investing at an all-time high in portfolio price carries more momentum than investing at a 52-week high.  
+
+$~$
+
 ## **Leveraged Single Stock Returns**
 ### Applying a 3x leverage multiplier to the daily returns of $SPY, equivalent to $UPRO.
 | When Buying On or Near an All-Time High                 | When Buying On or Near a 52-Week High                 |
@@ -53,12 +62,3 @@ $~$
 ### The return spread appears similar in the [side-by-side charts comparing leveraged and unleveraged performance](example-images/Portfolio-ATH-PR.png), with the unleveraged portfolio outperforming on average until the 4-year mark, after which the leveraged portfolio takes the lead.
 ![Plot ATH PR 1y-2y](example-images/Portfolio-ATH-PR-1y-2y.png)
 ![Plot ATH PR 4y](example-images/Portfolio-ATH-PR-4y.png)
-
-# Key Findings
-⭐ Backtesting with leveraged Shiller data from the 1800s shows that investing at all-time or 52-week highs underperforms the baseline index. However, after about 4 years, the value gap between the baseline and leveraged investments closes.
-
-⭐ Leveraging a portfolio of stocks outperforms and reduces risk compared to leveraging a single stock.
-
-⭐ Investing at an all-time high in portfolio price carries more momentum than investing at a 52-week high.  
-
-
