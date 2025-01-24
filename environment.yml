@@ -144,9 +144,11 @@ dependencies:
   - webencodings=0.5.1=py311haa95532_1
   - wheel=0.44.0=py311haa95532_0
   - win_inet_pton=1.1.0=py311haa95532_0
+  - xlrd=2.0.1=pyhd3eb1b0_1
   - xorg-libxau=1.0.11=h0e40799_1
   - xorg-libxdmcp=1.1.5=h0e40799_0
   - xz=5.2.6=h8d14728_0
+  - yfinance=0.2.41=pyhd8ed1ab_0
   - zeromq=4.3.5=ha9f60a1_7
   - zipp=3.21.0=pyhd8ed1ab_1
   - zstd=1.5.6=h0ea2cb4_0
@@ -155,5 +157,4 @@ dependencies:
       - cryptography==44.0.0
       - pycparser==2.22
       - setuptools==75.6.0
-      - yfinance==0.2.41
 prefix: C:\anaconda\envs\ath_investing
