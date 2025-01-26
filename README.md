@@ -16,7 +16,7 @@ This repository aims to provide a reproducible answer to that question. By simul
 | `Demo-Portfolio.ipynb`           | Simulates and backtests the return rates of a **porfolio of stocks** selected by the user.                                  |
 | `utilities.py`                | Provides callable functions for data preprocessing, return calculations, and plotting.                                      |
   
-$~$. 
+$~$
   
 # Key Findings
 ⭐ Backtesting with leveraged Shiller data from the 1800s reveals that historically, investing at or near 52-week highs has been less risky and more stable compared to investing at or near all-time highs.
@@ -24,9 +24,9 @@ $~$.
 ⭐ Leveraging a portfolio of stocks reduces risk compared to leveraging a single stock.
 
 ⭐ Investing at an all-time high in portfolio price carries more momentum than investing at a 52-week high.  
-
+  
 $~$
-
+  
 ## **Leveraged Single Stock Returns**
 ### Applying a 3x leverage multiplier to the daily returns of $SPY, equivalent to $UPRO.
 | When Buying On or Near an All-Time High                 | When Buying On or Near a 52-Week High                 |
@@ -50,9 +50,9 @@ $~$
 
 ### When backtesting with Shiller data, we find that investing at or near all-time highs performs poorly, whereas buying at 52-week highs shows stronger outcomes. Let’s now examine how leveraged and unleveraged performance compares over our holding periods of interest (e.g., 1–2 years).
 ![Plot 52W PR](example-images/3X-Shiller-52W-PR.png)
-
+  
 $~$
-
+  
 ## **Leveraged Portfolio of Stock Returns**
 ### Applying a 3x leverage multiplier to the daily returns of $QQQ, $SPY, and $SOXX (equivalent to $TQQQ, $UPRO, and $SOXL), with $TQQQ representing 60% of the portfolio, $UPRO 20%, and $SOXL 20%.
 | When Buying On or Near an All-Time High                 | When Buying On or Near a 52-Week High                 |
